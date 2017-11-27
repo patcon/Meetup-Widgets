@@ -1,9 +1,7 @@
 {
     "name": "patcon/Meetup-Widgets",
-    "version": "civictechto",
     "type": "wordpress-plugin",
-    "dist": {
-        "url": "git@github.com:patcon/Meetup-Widgets.git",
-        "type": "git"
+    "require": {
+      "composer/installers": "v1.0.6"
     }
 }
