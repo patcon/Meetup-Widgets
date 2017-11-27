@@ -1,5 +1,5 @@
 {
-    "name": "patcon/Meetup-Widgets",
+    "name": "patcon/meetup-widgets",
     "type": "wordpress-plugin",
     "require": {
       "composer/installers": "v1.0.6"
