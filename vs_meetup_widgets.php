@@ -182,6 +182,62 @@ class VsMeetWidget extends VsMeet {
 		$this->get_group_events( $id, $limit );
 	}
 
+		/**
+	 * Get the HTML for a group's events via Meetup API
+	 *
+	 * @param string  $id    Meetup ID or URL name
+	 * @param string  $limit Number of events to display, default 5.
+	 *
+	 * @return string Event list formatted for display in widget
+	 */
+	public function get_group_events_homepage( $id, $limit = 5 ) {
+		global $events;
+		$options = get_option( 'vs_meet_options' );
+		$this->api_key = $options['vs_meetup_api_key'];
+
+		if ( ! empty( $this->api_key ) ) {
+			$args = array(
+				'status' => 'upcoming',
+				'page' => $limit,
+			);
+			if ( preg_match( '/[a-zA-Z]/', $id ) ) {
+				$args['group_urlname'] = $id;
+			} else {
+				$args['group_id'] = $id;
+			}
+
+			$events = $this->get_data( $args, 'vsm_group_events_' . $id . '_' . $limit );
+			if ( ! $events ) {
+				return;
+			}
+
+			ob_start();
+			get_template_part( 'meetup-detailed-homepage', 'group' );
+			$out = ob_get_contents();
+
+			if ( empty( $out ) ) {
+				// grab the template included in plugin
+				if ( file_exists( dirname( __FILE__ ) . '/meetup-detailed-homepage.php' ) ) {
+					load_template( dirname( __FILE__ ) . '/meetup-detailed-homepage.php', false );
+				}
+				$out = ob_get_contents();
+			}
+
+			ob_end_clean();
+
+		} else {
+			if ( is_user_logged_in() ) {
+				$out = '<p><a href="' . admin_url( 'options-general.php' ) . '">Please enter an API key</a></p>';
+			}
+		}
+		return $out;
+	}
+
+	// Function name was changed in 2.1, leave this for backwards compatibilty
+	function get_list_events_homepage( $id, $limit = 5, $deprecated = '' ) {
+		$this->get_group_events_homepage( $id, $limit );
+	}
+
 	/**
 	 * Get user's list of events
 	 *
@@ -484,6 +540,79 @@ class VsMeetListWidget extends WP_Widget {
 		</p>
 	<?php }
 } // class VsMeetListWidget
+
+
+/**
+ * VsMeetListHomePageWidget extends the widget class to create an event list for a specific meetup group.
+ */
+class VsMeetListHomePageWidget extends WP_Widget {
+	/** constructor */
+	function VsMeetListHomePageWidget() {
+		parent::__construct( false, $name = __( 'Meetup Homepage List Event', 'vsmeet_domain' ), array( 'description' => __( 'Display a list of events for homepage.', 'vsmeet_domain' ) ) );
+	}
+
+	/** @see WP_Widget::widget */
+	function widget( $args, $instance ) {
+		extract( $args );
+		$title = apply_filters( 'widget_title', $instance['title'] );
+		$id = $instance['id']; // meetup ID or URL name
+		$limit = intval( $instance['limit'] );
+
+		echo $before_widget;
+		if ( $title ) {
+			echo $before_title . $title . $after_title;
+		}
+		if ( $id ) {
+			$vsm = new VsMeetWidget();
+			$html = $vsm->get_group_events_homepage( $id, $limit );
+			echo $html;
+		}
+		echo $after_widget;
+	}
+
+	/** @see WP_Widget::update */
+	function update( $new_instance, $old_instance ) {
+		$instance = $old_instance;
+		$instance['title'] = strip_tags( $new_instance['title'] );
+		if ( preg_match( '/[a-zA-Z]/', $new_instance['id'] ) ) {
+			$instance['id'] = sanitize_title( $new_instance['id'] );
+		} else {
+			$instance['id'] = str_replace( ' ', '', $new_instance['id'] );
+		}
+		$instance['limit'] = intval( $new_instance['limit'] );
+
+		return $instance;
+	}
+
+	/** @see WP_Widget::form */
+	function form( $instance ) {
+		if ( $instance ) {
+			$title = esc_attr( $instance['title'] );
+			$id = esc_attr( $instance['id'] ); // -> it's a name if it contains any a-zA-z, otherwise ID
+			$limit = intval( $instance['limit'] );
+		} else {
+			$title = '';
+			$id = '';
+			$limit = 5;
+		}
+		?>
+		<p><label for="<?php echo $this->get_field_id( 'title' ); ?>">
+			<?php _e( 'Title:', 'vsmeet_domain' ); ?>
+			<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo $title; ?>" />
+		</label></p>
+		<p><label for="<?php echo $this->get_field_id( 'id' ); ?>">
+			<?php _e( 'Group ID:', 'vsmeet_domain' ); ?>
+			<input class="widefat" id="<?php echo $this->get_field_id( 'id' ); ?>" name="<?php echo $this->get_field_name( 'id' ); ?>" type="text" value="<?php echo $id; ?>" />
+		</label></p>
+		<p>
+			<label for="<?php echo $this->get_field_id( 'limit' ); ?>">
+				<?php _e( 'Number of events to show:', 'vsmeet_domain' ); ?>
+			</label>
+			<input id="<?php echo $this->get_field_id( 'limit' ); ?>" name="<?php echo $this->get_field_name( 'limit' ); ?>" type="text" value="<?php echo $limit; ?>" size='3' />
+		</p>
+	<?php }
+} // class VsMeetListHomePageWidget
+
 
 /**
  * VsMeetUserList extends the widget class to create an event list for a specific meetup group.

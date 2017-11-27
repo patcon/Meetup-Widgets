@@ -1,13 +1,14 @@
 <?php
 global $events;
 
-echo '<ul class="meetup_list">';
+echo '<div class="navbar-extrabar">Next event: ';
 foreach ( $events as $event ) {
 	printf(
-		'<li><a href="%1$s">%2$s</a>; %3$s</li>',
+		'<a href="%1$s">%2$s on %3$s at %4$s</a>',
 		esc_url( $event->event_url ),
 		strip_tags( $event->name ),
-		date( 'M d, g:ia', intval( $event->time / 1000 + $event->utc_offset / 1000 ) )
+		date( 'F d, g:ia', intval( $event->time / 1000 + $event->utc_offset / 1000 ) ),
+		strip_tags( $event->venue->name )
 	);
 }
-echo '</ul>';
+echo '</ul></div>';

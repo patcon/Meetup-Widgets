@@ -119,6 +119,7 @@ function meetup_widgets_start() {
 // Register widgets
 add_action( 'widgets_init', create_function( '', 'return register_widget("VsMeetSingleWidget");' ) );
 add_action( 'widgets_init', create_function( '', 'return register_widget("VsMeetListWidget");' ) );
+add_action( 'widgets_init', create_function( '', 'return register_widget("VsMeetListHomePageWidget");' ) );
 add_action( 'widgets_init', create_function( '', 'return register_widget("VsMeetUserListWidget");' ) );
 
 function vsmw_need_oauth() {
